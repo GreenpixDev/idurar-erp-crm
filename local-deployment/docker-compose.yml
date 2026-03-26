@@ -1,0 +1,57 @@
+name: "idurar-erp-crm"
+
+services:
+  mongodb:
+    image: mongo:8.2.5
+    container_name: idurar-erp-crm-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=qwerty
+      - MONGO_INITDB_DATABASE=iac
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mongodb-network
+
+  backend:
+    image: greenpix/idurar-erp-crm-backend:4.1.0
+    container_name: idurar-erp-crm-backend
+    ports:
+      - "8888:8888"
+    environment:
+      - DATABASE=mongodb://root:qwerty@mongodb:27017/iac?authSource=admin
+      - JWT_SECRET=your_private_jwt_secret_key
+      - NODE_ENV=production
+      - OPENSSL_CONF=/dev/null
+      - PUBLIC_SERVER_FILE=http://localhost:8888/
+    networks:
+      - mongodb-network
+    depends_on:
+      - mongodb
+
+  frontend:
+    image: greenpix/idurar-erp-crm-frontend:4.1.0
+    container_name: idurar-erp-crm-frontend
+    ports:
+      - "80:80"
+
+  setup:
+    image: greenpix/idurar-erp-crm-backend:4.1.0
+    container_name: idurar-erp-crm-setup
+    profiles: ["setup"]
+    environment:
+      - DATABASE=mongodb://root:qwerty@mongodb:27017/iac?authSource=admin
+    networks:
+      - mongodb-network
+    depends_on:
+      - mongodb
+    command: ["npm", "run", "setup"]
+
+volumes:
+  mongo_data:
+
+networks:
+  mongodb-network:
+    name: idurar-erp-crm-network
