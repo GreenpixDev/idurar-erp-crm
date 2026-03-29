@@ -17,6 +17,8 @@ mongodb:
       enabled: true
       labels:
         release: monitoring
+  persistence:
+    size: 2Gi
 
 setup:
   command: "npm run setup"
