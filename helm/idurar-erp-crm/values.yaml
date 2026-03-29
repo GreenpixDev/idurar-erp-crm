@@ -9,6 +9,14 @@ mongodb:
     usernames: ["iac"]
     passwords: ["iac-example-password"]
     databases: ["iac"]
+  metrics:
+    enabled: true
+    image:
+      tag: latest
+    serviceMonitor:
+      enabled: true
+      labels:
+        release: monitoring
 
 setup:
   command: "npm run setup"
@@ -65,6 +73,13 @@ setup:
 
   affinity: { }
 
+# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cert-issuer
+  domain: "iec.kubeat.pro"
 
 backend:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
@@ -72,7 +87,7 @@ backend:
 
   # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
   image:
-    repository: greenpix/idurar-erp-crm-backend
+    repository: ghcr.io/greenpixdev/idurar-erp-crm-frontend
     # This sets the pull policy for images.
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
@@ -166,7 +181,7 @@ frontend:
 
   # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
   image:
-    repository: greenpix/idurar-erp-crm-frontend
+    repository: ghcr.io/greenpixdev/idurar-erp-crm-backend
     # This sets the pull policy for images.
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.

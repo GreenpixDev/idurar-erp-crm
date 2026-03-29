@@ -1,0 +1,25 @@
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
+service:
+  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+  type: ClusterIP
+  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
+  port: 9100
+
+metrics:
+  path: /metrics
+
+endpointSlice:
+  enabled: false
+
+endpoints:
+  enabled: true
+
+serviceMonitor:
+  labels:
+    release: monitoring
+
+externalIp: 192.168.122.1

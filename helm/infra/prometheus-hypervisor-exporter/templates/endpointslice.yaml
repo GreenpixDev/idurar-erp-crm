@@ -1,0 +1,16 @@
+{{- if .Values.endpointSlice.enabled }}
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: {{ include "prometheus-hypervisor-exporter.fullname" . }}
+  labels:
+    {{- include "prometheus-hypervisor-exporter.labels" . | nindent 4 }}
+addressType: IPv4
+ports:
+  - name: metrics
+    port: {{ .Values.service.port }}
+    protocol: TCP
+endpoints:
+  - addresses:
+      - {{ .Values.externalIp }}
+{{- end }}

@@ -16,7 +16,7 @@ services:
       - mongodb-network
 
   backend:
-    image: greenpix/idurar-erp-crm-backend:4.1.0
+    image: ghcr.io/greenpixdev/idurar-erp-crm-backend:latest
     container_name: idurar-erp-crm-backend
     ports:
       - "8888:8888"
@@ -32,13 +32,13 @@ services:
       - mongodb
 
   frontend:
-    image: greenpix/idurar-erp-crm-frontend:4.1.0
+    image: ghcr.io/greenpixdev/idurar-erp-crm-frontendlatest
     container_name: idurar-erp-crm-frontend
     ports:
       - "80:80"
 
   setup:
-    image: greenpix/idurar-erp-crm-backend:4.1.0
+    image: ghcr.io/greenpixdev/idurar-erp-crm-backend:latest
     container_name: idurar-erp-crm-setup
     profiles: ["setup"]
     environment:

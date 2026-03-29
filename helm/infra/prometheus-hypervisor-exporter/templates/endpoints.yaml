@@ -1,0 +1,14 @@
+{{- if .Values.endpoints.enabled }}
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ include "prometheus-hypervisor-exporter.fullname" . }}
+  labels:
+    {{- include "prometheus-hypervisor-exporter.labels" . | nindent 4 }}
+subsets:
+  - addresses:
+      - ip: {{ .Values.externalIp }}
+    ports:
+      - name: metrics
+        port: {{ .Values.service.port }}
+{{- end }}

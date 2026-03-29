@@ -1,0 +1,38 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "idurar-erp-crm.fullname" . }}
+  labels:
+    {{- include "idurar-erp-crm.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  tls:
+    - hosts:
+        - {{ $.Values.ingress.domain }}
+      secretName: {{ .Release.Name }}-tls
+  rules:
+    - host: {{ $.Values.ingress.domain }}
+      http:
+        paths:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "backend.fullname" $ }}
+                port:
+                  number: {{ $.Values.backend.service.port }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "frontend.fullname" $ }}
+                port:
+                  number: {{ $.Values.frontend.service.port }}
+{{- end }}
