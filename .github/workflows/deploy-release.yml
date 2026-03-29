@@ -7,7 +7,7 @@ on:
     paths:
       - 'backend/**'
       - 'frontend/**'
-      - 'helm/**'
+      - 'helm/idurar-erp-crm/**'
       - '.github/workflows/deploy-release.yml'
   workflow_dispatch:
 

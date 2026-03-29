@@ -1,6 +1,6 @@
 ---
 cluster:
-  name: meta-monitoring-tutorial
+  name: meta-values-tutorial
 
 destinations:
   - name: loki
@@ -11,7 +11,7 @@ clusterEvents:
   enabled: true
   collector: alloy-logs
   namespaces:
-    - monitoring
+    - values
     - default
 
 nodeLogs:
@@ -25,7 +25,7 @@ podLogs:
   structuredMetadata:
     pod: pod  # Set structured metadata "pod" from label "pod"
   namespaces:
-    - monitoring
+    - values
     - default
 
 # Collectors
