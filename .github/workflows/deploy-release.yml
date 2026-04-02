@@ -90,7 +90,7 @@ jobs:
           tags: |
             ${{ needs.prepare.outputs.backend_image }}:${{ needs.prepare.outputs.image_tag }}
             ${{ needs.prepare.outputs.backend_image }}:${{ needs.prepare.outputs.version }}
-            ${{ needs.prepare.outputs.frontend_image }}:latest
+            ${{ needs.prepare.outputs.backend_image }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
