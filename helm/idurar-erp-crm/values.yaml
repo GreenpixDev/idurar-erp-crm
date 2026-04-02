@@ -82,6 +82,14 @@ ingress:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cert-issuer
   domain: "iec.kubeat.pro"
+  backend:
+    paths:
+      - /api/
+      - /download/
+      - /public/
+  frontend:
+    paths:
+      - /
 
 backend:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/

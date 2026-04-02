@@ -21,18 +21,22 @@ spec:
     - host: {{ $.Values.ingress.domain }}
       http:
         paths:
-          - path: /api/
+          {{- range .Values.ingress.backend.paths }}
+          - path: {{ . }}
             pathType: Prefix
             backend:
               service:
                 name: {{ include "backend.fullname" $ }}
                 port:
                   number: {{ $.Values.backend.service.port }}
-          - path: /
+          {{- end }}
+          {{- range .Values.ingress.frontend.paths }}
+          - path: {{ . }}
             pathType: Prefix
             backend:
               service:
                 name: {{ include "frontend.fullname" $ }}
                 port:
                   number: {{ $.Values.frontend.service.port }}
+          {{- end }}
 {{- end }}

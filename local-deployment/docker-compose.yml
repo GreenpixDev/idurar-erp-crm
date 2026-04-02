@@ -32,7 +32,7 @@ services:
       - mongodb
 
   frontend:
-    image: ghcr.io/greenpixdev/idurar-erp-crm-frontendlatest
+    image: ghcr.io/greenpixdev/idurar-erp-crm-frontend:latest
     container_name: idurar-erp-crm-frontend
     ports:
       - "80:80"
