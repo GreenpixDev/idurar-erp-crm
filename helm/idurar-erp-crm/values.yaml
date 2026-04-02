@@ -126,6 +126,12 @@ backend:
     # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
     port: 80
 
+  serviceMonitor:
+    labels:
+      release: monitoring
+
+    path: /metrics
+
   resources: {}
     # We usually recommend not to specify default resources and to leave this as a conscious
     # choice for the user. This also increases chances charts run on environments with little
