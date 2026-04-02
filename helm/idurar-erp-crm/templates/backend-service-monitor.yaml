@@ -10,7 +10,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- include "backend.selectorLabels" . | nindent 4 }}
+      {{- include "backend.selectorLabels" . | nindent 6 }}
   endpoints:
     - port: http
       path: {{ .Values.backend.serviceMonitor.path }}
