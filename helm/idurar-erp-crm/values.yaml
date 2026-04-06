@@ -186,6 +186,8 @@ backend:
     OPENSSL_CONF: "/dev/null"
     PUBLIC_SERVER_FILE: "http://localhost:8888/"
     MAILTRAP_TOKEN: "4a9ed22e14c4f5e6876d725b1d132c5d"
+    OTEL_SERVICE_NAME: "idurar-erp-crm"
+    OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger.monitoring.svc.cluster.local:4318/v1/traces"
 
   mongodb:
     username: "iac"
