@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
-const client = require('prom-client');
+const { client, register } = require('./metrics');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
 const coreApiRouter = require('./routes/coreRoutes/coreApi');
@@ -19,12 +19,6 @@ const fileUpload = require('express-fileupload');
 const app = express();
 
 //-------------- Добавляем метрики ------------------------
-
-const register = new client.Registry();
-
-client.collectDefaultMetrics({
-  register,
-});
 
 const httpRequestDuration = new client.Histogram({
   name: 'http_request_duration_seconds',

@@ -1,5 +1,19 @@
 const { MailtrapClient } = require("mailtrap");
 const mongoose = require('mongoose');
+const { client: prom, register } = require('../../../metrics');
+
+const mailSentTotal = new prom.Counter({
+  name: 'invoice_mail_sent_total',
+  help: 'Total number of invoice emails attempted',
+  labelNames: ['status'],
+  registers: [register],
+});
+
+const mailDuration = new prom.Histogram({
+  name: 'invoice_mail_duration_seconds',
+  help: 'Duration of invoice email send operations in seconds',
+  registers: [register],
+});
 
 const client = new MailtrapClient({ token: process.env.MAILTRAP_TOKEN });
 
@@ -13,6 +27,7 @@ const mail = async (req, res) => {
     const invoice = await mongoose.model('Invoice').findById(req.body.id).populate('client');
 
     if (!invoice) {
+      mailSentTotal.inc({ status: 'error' });
       return res.status(404).json({
         success: false,
         result: null,
@@ -22,6 +37,7 @@ const mail = async (req, res) => {
 
     const email = invoice?.client?.email;
     if (!email) {
+      mailSentTotal.inc({ status: 'error' });
       return res.status(400).json({
         success: false,
         result: null,
@@ -29,6 +45,7 @@ const mail = async (req, res) => {
       });
     }
 
+    const endTimer = mailDuration.startTimer();
     await client.send({
       from: sender,
       to: [{ email }],
@@ -36,6 +53,8 @@ const mail = async (req, res) => {
       html: invoiceToHtml(invoice),
       category: "Integration Test",
     });
+    endTimer();
+    mailSentTotal.inc({ status: 'success' });
 
     return res.status(200).json({
       success: true,
@@ -44,6 +63,7 @@ const mail = async (req, res) => {
     });
 
   } catch (error) {
+    mailSentTotal.inc({ status: 'error' });
     return res.status(500).json({
       success: false,
       result: null,
