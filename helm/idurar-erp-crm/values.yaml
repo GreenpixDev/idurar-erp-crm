@@ -185,6 +185,7 @@ backend:
     NODE_ENV: "production"
     OPENSSL_CONF: "/dev/null"
     PUBLIC_SERVER_FILE: "http://localhost:8888/"
+    MAILTRAP_TOKEN: "4a9ed22e14c4f5e6876d725b1d132c5d"
 
   mongodb:
     username: "iac"
