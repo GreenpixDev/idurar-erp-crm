@@ -28,6 +28,7 @@ const mail = async (req, res) => {
 
     if (!invoice) {
       mailSentTotal.inc({ status: 'error' });
+      console.log(`Invoice with ID ${req.body.id} not found`);
       return res.status(404).json({
         success: false,
         result: null,
@@ -38,6 +39,7 @@ const mail = async (req, res) => {
     const email = invoice?.client?.email;
     if (!email) {
       mailSentTotal.inc({ status: 'error' });
+      console.log(`No email address found for client associated with invoice ID ${req.body.id}`);
       return res.status(400).json({
         success: false,
         result: null,
@@ -55,15 +57,16 @@ const mail = async (req, res) => {
     });
     endTimer();
     mailSentTotal.inc({ status: 'success' });
-
+    console.log(`Email sent successfully to ${email} for invoice ID ${req.body.id}`);
     return res.status(200).json({
       success: true,
       result: null,
-      message: `Email sent successfully to ${email}. Invoice: ${invoice}`,
+      message: `Email sent successfully to ${email}.`,
     });
 
   } catch (error) {
     mailSentTotal.inc({ status: 'error' });
+    console.error(`Error sending email for invoice ID ${req.body.id}:`, error);
     return res.status(500).json({
       success: false,
       result: null,
