@@ -5,6 +5,29 @@ import errorHandler from './errorHandler';
 import successHandler from './successHandler';
 import storePersist from '@/redux/storePersist';
 
+// Global 30s timeout on all requests
+axios.defaults.timeout = 30_000;
+
+// Retry interceptor: retries safe (read-only) methods up to 2 times on transient failures
+(function installRetryInterceptor() {
+  axios.interceptors.response.use(
+    (res) => res,
+    async (error) => {
+      const config = error.config;
+      if (!config) return Promise.reject(error);
+      const method = (config.method || '').toUpperCase();
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) return Promise.reject(error);
+      config._retryCount = config._retryCount || 0;
+      if (config._retryCount >= 2) return Promise.reject(error);
+      const isRetryable = !error.response || error.response.status >= 500 || error.code === 'ECONNABORTED';
+      if (!isRetryable) return Promise.reject(error);
+      config._retryCount += 1;
+      await new Promise((r) => setTimeout(r, 300 * 2 ** (config._retryCount - 1)));
+      return axios(config);
+    }
+  );
+})();
+
 function findKeyByPrefix(object, prefix) {
   for (var property in object) {
     if (object.hasOwnProperty(property) && property.toString().startsWith(prefix)) {

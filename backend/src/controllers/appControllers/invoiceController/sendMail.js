@@ -1,6 +1,7 @@
 const { MailtrapClient } = require("mailtrap");
 const mongoose = require('mongoose');
 const { client: prom, register } = require('../../../metrics');
+const { withTimeout, withRetry, createBreaker } = require('@/utils/resilience');
 
 const mailSentTotal = new prom.Counter({
   name: 'invoice_mail_sent_total',
@@ -21,6 +22,12 @@ const sender = {
   email: "hello@demomailtrap.co",
   name: "Test",
 };
+
+const mailtrapBreaker = createBreaker(
+  'mailtrap',
+  (payload) => withTimeout(() => client.send(payload), 10_000, 'mailtrap'),
+  { resetTimeout: 60_000 }
+);
 
 const mail = async (req, res) => {
   try {
@@ -48,13 +55,16 @@ const mail = async (req, res) => {
     }
 
     const endTimer = mailDuration.startTimer();
-    await client.send({
-      from: sender,
-      to: [{ email }],
-      subject: "iDURAR Invoice",
-      html: invoiceToHtml(invoice),
-      category: "Integration Test",
-    });
+    await withRetry(
+      () => mailtrapBreaker.fire({
+        from: sender,
+        to: [{ email }],
+        subject: "iDURAR Invoice",
+        html: invoiceToHtml(invoice),
+        category: "Integration Test",
+      }),
+      { attempts: 3, baseDelayMs: 500, label: 'mailtrap' }
+    );
     endTimer();
     mailSentTotal.inc({ status: 'success' });
     console.log(`Email sent successfully to ${email} for invoice ID ${req.body.id}`);
@@ -67,10 +77,11 @@ const mail = async (req, res) => {
   } catch (error) {
     mailSentTotal.inc({ status: 'error' });
     console.error(`Error sending email for invoice ID ${req.body.id}:`, error);
-    return res.status(500).json({
+    const isOpen = error.code === 'EOPENBREAKER';
+    return res.status(isOpen ? 503 : 500).json({
       success: false,
       result: null,
-      message: error?.message ?? `Failed to send email`,
+      message: isOpen ? 'Email service temporarily unavailable' : error?.message ?? 'Failed to send email',
     });
   }
 };
