@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
-const { register, metricsMiddleware } = require('./metrics');
+const { client, register, metricsMiddleware } = require('./metrics');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
 const coreApiRouter = require('./routes/coreRoutes/coreApi');
