@@ -84,7 +84,12 @@ function metricsMiddleware(req, res, next) {
         );
     }
 
-    res.on('finish', () => {
+    let recorded = false;
+
+    const record = () => {
+        if (recorded) return;
+        recorded = true;
+
         const labels = {
             method: req.method,
             route: req.route?.path || req.path,
@@ -105,7 +110,10 @@ function metricsMiddleware(req, res, next) {
         }
 
         httpActiveRequests.dec();
-    });
+    };
+
+    res.on('finish', record);
+    res.on('close', record);
 
     next();
 }
