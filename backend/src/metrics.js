@@ -92,7 +92,7 @@ function metricsMiddleware(req, res, next) {
 
         const labels = {
             method: req.method,
-            route: req.route?.path || req.path,
+            route: maskRoute(req.route?.path || req.path),
             status: res.statusCode,
         };
 
@@ -123,3 +123,27 @@ module.exports = {
     register,
     metricsMiddleware,
 };
+
+const masks = [
+    RegExp("^\\/[^\\/]+\\/read\\/(?<id>[^\\/]+)$"),
+    RegExp("^\\/[^\\/]+\\/update\\/(?<id>[^\\/]+)$"),
+    RegExp("^\\/[^\\/]+\\/delete\\/(?<id>[^\\/]+)$"),
+    RegExp("^\\/quote\\/convert\\/(?<id>[^\\/]+)$"),
+    RegExp("^\\/admin\\/password-update\\/(?<id>[^\\/]+)$"),
+    RegExp("^\\/invoice\\/pay\\/(?<id>[^\\/]+)$")
+]
+
+function maskRoute(route) {
+    for (const maskRegex of masks) {
+        if (maskRegex.test(route)) {
+            return route.replace(maskRegex, (masked, ...args) => {
+                const groups = args.at(-1);
+                for (const groupName of Object.keys(groups)) {
+                    masked = masked.replace(groups[groupName], `:${groupName}`);
+                }
+                return masked;
+            });
+        }
+    }
+    return route;
+}
