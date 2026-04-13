@@ -1,9 +1,11 @@
 const express = require('express');
+const mongoose = require('mongoose');
 
 const cors = require('cors');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const { client, register, metricsMiddleware } = require('./metrics');
+const { getBreakerStats } = require('./utils/resilience');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
 const coreApiRouter = require('./routes/coreRoutes/coreApi');
@@ -50,6 +52,22 @@ app.use('/api', adminAuth.isValidAuthToken, coreApiRouter);
 app.use('/api', adminAuth.isValidAuthToken, erpApiRouter);
 app.use('/download', coreDownloadRouter);
 app.use('/public', corePublicRouter);
+
+// Health check endpoint — reports DB and circuit breaker states
+app.get('/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const dbStateMap = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' };
+  const breakers = getBreakerStats();
+  const dbHealthy = dbState === 1;
+  const allBreakersHealthy = Object.values(breakers).every((b) => b.state !== 'open');
+  const healthy = dbHealthy && allBreakersHealthy;
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
+    timestamp: new Date().toISOString(),
+    database: { state: dbStateMap[dbState] || 'unknown', healthy: dbHealthy },
+    circuitBreakers: breakers,
+  });
+});
 
 // If that above routes didnt work, we 404 them and forward to error handler
 app.use(errorHandlers.notFound);

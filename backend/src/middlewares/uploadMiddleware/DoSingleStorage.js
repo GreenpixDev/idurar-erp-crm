@@ -6,6 +6,7 @@ const { slugify } = require('transliteration');
 const fileFilterMiddleware = require('./utils/fileFilterMiddleware');
 
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { withTimeout, withRetry, createBreaker } = require('@/utils/resilience');
 
 const secretAccessKey = process.env.DO_SPACES_SECRET;
 const accessKeyId = process.env.DO_SPACES_KEY;
@@ -21,6 +22,14 @@ const clientParams = {
   },
 };
 
+const s3Client = new S3Client(clientParams);
+
+const s3Breaker = createBreaker(
+  's3',
+  (command) => withTimeout(() => s3Client.send(command), 15_000, 's3-upload'),
+  { errorThresholdPercentage: 60, volumeThreshold: 3 }
+);
+
 const DoSingleStorage = ({
   entity,
   fileType = 'default',
@@ -32,8 +41,6 @@ const DoSingleStorage = ({
       req.body[fieldName] = null;
       next();
     } else {
-      const s3Client = new S3Client(clientParams);
-
       try {
         if (!fileFilterMiddleware({ type: fileType, mimetype: req.files.file.mimetype })) {
           // skip upload if File type not supported
@@ -63,7 +70,10 @@ const DoSingleStorage = ({
           Body: req.files.file.data,
         };
         const command = new PutObjectCommand(uploadParams);
-        const s3response = await s3Client.send(command);
+        const s3response = await withRetry(
+          () => s3Breaker.fire(command),
+          { attempts: 2, baseDelayMs: 1_000, label: 's3' }
+        );
 
         if (s3response.$metadata.httpStatusCode === 200) {
           // saving file name and extension in request upload object
@@ -80,11 +90,12 @@ const DoSingleStorage = ({
           next();
         }
       } catch (error) {
-        return res.status(403).json({
+        const isOpen = error.code === 'EOPENBREAKER';
+        return res.status(isOpen ? 503 : 500).json({
           success: false,
           result: null,
           controller: 'DoSingleStorage.js',
-          message: 'Error on uploading file',
+          message: isOpen ? 'Storage service temporarily unavailable' : 'Error on uploading file',
         });
       }
     }
