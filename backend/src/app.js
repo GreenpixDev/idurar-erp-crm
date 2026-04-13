@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
-const { client, register } = require('./metrics');
+const { client, register, metricsMiddleware } = require('./metrics');
 const { getBreakerStats } = require('./utils/resilience');
 
 const coreAuthRouter = require('./routes/coreRoutes/coreAuth');
@@ -19,18 +19,6 @@ const erpApiRouter = require('./routes/appRoutes/appApi');
 const fileUpload = require('express-fileupload');
 // create our Express app
 const app = express();
-
-//-------------- Добавляем метрики ------------------------
-
-const httpRequestDuration = new client.Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'Duration of HTTP requests in seconds',
-  labelNames: ['method', 'route', 'status'],
-});
-
-register.registerMetric(httpRequestDuration);
-
-//---------------------------------------------------------------
 
 app.use(
   cors({
@@ -48,21 +36,8 @@ app.use(compression());
 // // default options
 // app.use(fileUpload());
 
-
 // Устанавливаем метрики HTTP запросов
-app.use((req, res, next) => {
-  const end = httpRequestDuration.startTimer();
-
-  res.on('finish', () => {
-    end({
-      method: req.method,
-      route: req.route?.path || req.path,
-      status: res.statusCode,
-    });
-  });
-
-  next();
-});
+app.use(metricsMiddleware);
 
 // Запрос на метрики
 app.get('/metrics', async (req, res) => {
